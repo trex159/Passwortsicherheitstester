@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hier kannst du die Sicherheit deines Passwort testen. Nach den Vorgaben der RSO.">
+    <title>Passwort Sicherheitstest</title>
+    <style>
+        body {
+            font-family: 'Arial', Sans-sherif;
+            background-color: #f0f0f0;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #030028;
+            border: 4px solid #010101;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            width: 450px;
+            max-width: 100%;
+        }
+        h2 {
+            color: #34ff45;
+            text-align: center;
+        }
+        label {
+            color: #4be458;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #46ff55;
+            border-radius: 5px;
+            background-color: #fff;
+            color: #0d0438;
+        }
+        button {
+            background-color: #2fff00;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #2de803;
+        }
+        .checklist {
+            margin-top: 20px;
+        }
+        .checklist li {
+            list-style: none;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .checklist li.invalid {
+            color: #ff0000;
+        }
+        .checklist li.valid {
+            color: #51ff00;
+        }
+        .grade {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            background-color: #f0f0f0;
+            color: #0d0438;
+        }
+        .highlight {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Passwort Sicherheit Tester</h2>
+    <label for="username">Benutzername:</label>
+    <input type="text" id="username" placeholder="Benutzername eingeben" oninput="updateChecklist()">
+    <label for="password">Passwort:</label>
+    <input type="password" id="password" placeholder="Passwort eingeben" oninput="updateChecklist()">
+    <button onclick="BoB()">Passwort testen</button>
+
+    <ul class="checklist" id="checklist">
+        <li id="lengthCheck">Mindestens 8 Zeichen</li>
+        <li id="upperCheck">Mindestens 1 Großbuchstabe</li>
+        <li id="lowerCheck">Mindestens 1 Kleinbuchstabe</li>
+        <li id="digitCheck">Mindestens 1 Ziffer</li>
+        <li id="specialCheck">Mindestens 1 Sonderzeichen</li>
+        <li id="usernameCheck">Kein Bestandteil des Benutzernamens (mind. 3 Zeichen)</li>
+        <p>Tipp: Mache dein Passwort etwas länger, und nutze mehrere Zahlen und Sonderzeichen.<p>
+        <p>Tipp: Nutze keine Standardpasswörter wie "Hund123!" oder "1!Asdfgh".<p>
+    </ul>
+
+    <div id="gradeBox" class="grade"></div>
+</div>
+
+<script>
+    const specialCharsRegex = /[^a-zA-Z0-9]/;
+    const letterSequences = [
+        "abcdefghijklmnopqrstuvwxyz",
+        "qwertzuiopü",
+        "asdfghjklöä",
+        "yxcvbnm"
+    ];
+    const numberSequences = ["01234567890", "09876543210"];
+    const keyboardSeq = "qwertzuiopüasdfghjklöäyxcvbnm";
+
+    function updateChecklist() {
+        const password = document.getElementById('password').value;
+        const username = document.getElementById('username').value;
+
+        document.getElementById('lengthCheck').className = password.length >= 8 ? 'valid' : 'invalid';
+        document.getElementById('upperCheck').className = /[A-Z]/.test(password) ? 'valid' : 'invalid';
+        document.getElementById('lowerCheck').className = /[a-z]/.test(password) ? 'valid' : 'invalid';
+        document.getElementById('digitCheck').className = /\d/.test(password) ? 'valid' : 'invalid';
+        document.getElementById('specialCheck').className = specialCharsRegex.test(password) ? 'valid' : 'invalid';
+        document.getElementById('usernameCheck').className = !containsUsernamePart(password, username) ? 'valid' : 'invalid';
+    }
+
+    function containsUsernamePart(password, username) {
+        if (username.length < 3) return false;
+        for (let i = 0; i <= username.length - 3; i++) {
+            const part = username.slice(i, i + 3);
+            if (password.toLowerCase().includes(part.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function findSequentialSequences(password, sequences, minLength) {
+        for (let sequence of sequences) {
+            for (let i = 0; i <= sequence.length - minLength; i++) {
+                const subSequence = sequence.slice(i, i + minLength);
+                const regex = new RegExp(subSequence, 'i');
+                if (regex.test(password)) {
+                    return subSequence;
+                }
+            }
+        }
+        return null;
+    }
+
+    function BoB() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        let reasons = [];
+        let problematicParts = [];
+
+        const checklist = {
+            length: password.length >= 8,
+            upper: /[A-Z]/.test(password),
+            lower: /[a-z]/.test(password),
+            digit: /\d/.test(password),
+            special: specialCharsRegex.test(password),
+            username: !containsUsernamePart(password, username)
+        };
+
+        if (!Object.values(checklist).every(Boolean)) {
+            document.getElementById('gradeBox').innerHTML = "Passwort erfüllt nicht alle Mindestanforderungen.";
+            document.getElementById('gradeBox').style.backgroundColor = "red";
+            return;
+        }
+
+        let score = 0;
+        if (password.length >= 12) score += 1;
+        if (new Set(password).size >= 6) score += 1;
+        if (/\d/.test(password) && specialCharsRegex.test(password)) score += 1;
+
+        // Check for sequential numbers and letters
+        const sequentialNumber = findSequentialSequences(password, numberSequences, 3);
+        const sequentialLetter = findSequentialSequences(password, letterSequences, 4);
+
+        if (sequentialNumber) {
+            problematicParts.push(sequentialNumber);
+            reasons.push("Passwort enthält aufeinanderfolgende Zahlen.");
+            score = Math.max(score - 1, 0);
+        }
+
+        if (sequentialLetter) {
+            problematicParts.push(sequentialLetter);
+            reasons.push("Passwort enthält aufeinanderfolgende Buchstaben.");
+            score = Math.max(score - 1, 0);
+        }
+
+        // Grade logic
+        let grade, gradeColor;
+        if (score >= 3) {
+            grade = 1;
+            gradeColor = "#1aff00"; // Hellgrün
+            reasons.push("Sehr sicheres Passwort.");
+        } else if (score === 2) {
+            grade = 2;
+            gradeColor = "#8bc34a"; // Hellgrün
+            reasons.push("Sicheres Passwort.");
+        } else if (score === 1) {
+            grade = 3;
+            gradeColor = "#ffeb3b"; // Gelb
+            reasons.push("Passwort ist ausreichend.");
+        } else {
+            grade = 4;
+            gradeColor = "#ff9800"; // Orange
+            reasons.push("Passwort könnte sicherer sein.");
+        }
+
+        // Ausgabe der Note
+        const gradeBox = document.getElementById('gradeBox');
+        gradeBox.innerHTML = `Note: ${grade} <br> ${reasons.join(' ')} <br> Ihr Passwort: ${password} <br> Ihr Benutzername: ${username}`;
+        gradeBox.style.backgroundColor = gradeColor;
+    }
+</script>
+
+</body>
+</html>
